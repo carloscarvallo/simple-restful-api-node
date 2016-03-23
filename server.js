@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
 var mongo = require('mongodb').MongoClient;
+var ObjectId = require('mongodb').ObjectID;
 var db = require('./config/db');
 var articulo = {};
 
@@ -39,9 +40,9 @@ router.route('/articulos')
 
       var collection = db.collection('articulos');
       collection.insert(articulo.nombre, function(err, data){
-        if (err) res.send(err);
-        console.log(JSON.stringify(articulo.nombre));
-        db.close();
+       if (err) res.send(err);
+       console.log(JSON.stringify(articulo.nombre));
+       db.close();
       })
 
       res.json({ message: 'Articulo creado!' });
@@ -63,7 +64,63 @@ router.route('/articulos')
 
     });
 
+  });
+
+router.route('/articulos/:articulo_id')
+
+  .get(function(req, res) {
+
+    articulo.id = req.params.articulo_id;
+
+    databaseConnect(db.url, function (db) {
+      console.log("Conectado correctamente");
+
+      var collection = db.collection('articulos');
+      collection.find( { _id: ObjectId( articulo.id ) } ).toArray(function(err, data){
+        if (err) res.send(err);
+        res.json(data);
+        db.close();
+      })
+
+    });
+
   })
+
+  .put(function(req, res) {
+
+    articulo.id = req.params.articulo_id;
+    articulo.nombre = req.body.title;
+
+    databaseConnect(db.url, function (db) {
+      console.log("Conectado correctamente");
+
+      var collection = db.collection('articulos');
+      collection.update( { _id: ObjectId( articulo.id ) }, { $set: { title : articulo.nombre } },
+      function( err ){
+        if (err) throw err;
+        db.close();
+      })
+      res.json({ message: 'Articulo actualizado!' });
+    });
+
+  })
+
+  .delete(function(req, res) {
+
+    articulo.id = req.params.articulo_id;
+
+    databaseConnect(db.url, function (db) {
+      console.log("Conectado correctamente");
+
+      var collection = db.collection('articulos');
+      collection.remove( { _id: ObjectId( articulo.id ) }, function( err ){
+        if (err) throw err;
+        db.close();
+      })
+      res.json({ message: 'Articulo Borrado!' });
+    });
+
+  });
 
 app.use('/api', router);
 
