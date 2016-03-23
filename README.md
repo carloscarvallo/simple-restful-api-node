@@ -1,1 +1,2 @@
-# simple-restful-node-api
+# Simple Restful Node Api
+Using Express 4, Mongodb, Nodejs
