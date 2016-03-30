@@ -1,17 +1,8 @@
 var express = require('express');
 var app = express();
 var bodyParser = require('body-parser');
-var mongo = require('mongodb').MongoClient;
-var ObjectId = require('mongodb').ObjectID;
-var db = require('./config/db');
+var db = require('./app/models/articles');
 var articulo = {};
-
-var databaseConnect = function( url, callback ) {
-  mongo.connect(url, function( err, db ) {
-          if (err) throw err
-          callback( db );
-  });
-};
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
@@ -32,94 +23,30 @@ router.get('/', function(req, res) {
 router.route('/articulos')
 
   .post(function(req, res) {
-
     articulo.nombre = req.body;
-
-    databaseConnect(db.url, function (db) {
-      console.log("Conectado correctamente");
-
-      var collection = db.collection('articulos');
-      collection.insert(articulo.nombre, function(err, data){
-       if (err) res.send(err);
-       console.log(JSON.stringify(articulo.nombre));
-       db.close();
-      })
-
-      res.json({ message: 'Articulo creado!' });
-    });
-
+    db.insert( articulo.nombre, res );
   })
 
   .get(function(req, res) {
-
-    databaseConnect(db.url, function (db) {
-      console.log("Conectado correctamente");
-
-      var collection = db.collection('articulos');
-      collection.find({}).toArray(function(err, data){
-        if (err) res.send(err);
-        res.json(data);
-        db.close();
-      })
-
-    });
-
+    db.findAll( res );
   });
 
 router.route('/articulos/:articulo_id')
 
   .get(function(req, res) {
-
     articulo.id = req.params.articulo_id;
-
-    databaseConnect(db.url, function (db) {
-      console.log("Conectado correctamente");
-
-      var collection = db.collection('articulos');
-      collection.find( { _id: ObjectId( articulo.id ) } ).toArray(function(err, data){
-        if (err) res.send(err);
-        res.json(data);
-        db.close();
-      })
-
-    });
-
+    db.findById( articulo.id, res );
   })
 
   .put(function(req, res) {
-
     articulo.id = req.params.articulo_id;
     articulo.nombre = req.body.title;
-
-    databaseConnect(db.url, function (db) {
-      console.log("Conectado correctamente");
-
-      var collection = db.collection('articulos');
-      collection.update( { _id: ObjectId( articulo.id ) }, { $set: { title : articulo.nombre } },
-      function( err ){
-        if (err) throw err;
-        db.close();
-      })
-      res.json({ message: 'Articulo actualizado!' });
-    });
-
+    db.update( articulo.id, articulo.nombre, res );
   })
 
   .delete(function(req, res) {
-
     articulo.id = req.params.articulo_id;
-
-    databaseConnect(db.url, function (db) {
-      console.log("Conectado correctamente");
-
-      var collection = db.collection('articulos');
-      collection.remove( { _id: ObjectId( articulo.id ) }, function( err ){
-        if (err) throw err;
-        db.close();
-      })
-      res.json({ message: 'Articulo Borrado!' });
-    });
-
+    db.remove( articulo.id, res );
   });
 
 app.use('/api', router);
